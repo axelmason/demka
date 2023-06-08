@@ -32,7 +32,7 @@ class OrderController extends Controller
         }, new Collection());
         
         // синхронизируем
-        $order->carts()->sync($insert);
+        $order->carts()->syncWithoutDetaching($insert);
 
         foreach ($cart->get() as $c) {
             $product = Product::findOrFail($c->product_id);
