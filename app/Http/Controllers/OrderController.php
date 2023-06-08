@@ -15,13 +15,25 @@ class OrderController extends Controller
 
         return view('orders', compact('orders'));
     }
-    public function orderCreate(Request $r)
+    
+   public function orderCreate(Request $r)
     {
         if(is_null($r->password)) return back();
 
         if(!Hash::check($r->password,auth()->user()->password)) return back();
 
         $cart = Cart::query()->where('user_id',auth()->id())->where('status',0);
+        
+        // Создаем order
+        $order = Order::create(['user_id' => auth()->user()->id, 'status' => 0]);
+        
+        // Собираем структуру для синхронизации
+        $insert = $cart->reduce(function($out, $item) {
+            return [$item['id'] => ['count' => $item['count']]];
+        }, new Collection());
+        
+        // синхронизируем
+        $order->carts()->sync($insert);
 
         foreach ($cart->get() as $c) {
             $product = Product::findOrFail($c->product_id);
